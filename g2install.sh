@@ -22,7 +22,6 @@ optimize_wifi() {
 
 install_dependencies() {
     echo "Installing required dependencies (jq, curl)..."
-    # Removed awk from apt-get as it is natively built into the OS
     sudo apt-get update -qq && sudo apt-get install -y jq curl > /dev/null
 }
 
@@ -160,13 +159,13 @@ if [ -f "$AGENT_BIN" ] && [ -f "$CONFIG_FILE" ]; then
     echo "   3) Uninstall Completely"
     echo "   4) Cancel"
     echo ""
-    read -p " Choice [1-4]: " menu_choice
+    read -p " Choice [1-4]: " menu_choice </dev/tty
     
     case $menu_choice in
         1)
             echo "Opening configuration file. Press Ctrl+X, then Y, then Enter to save."
             sleep 2
-            sudo nano "$CONFIG_FILE"
+            sudo nano "$CONFIG_FILE" </dev/tty
             echo "Restarting service to apply changes..."
             sudo systemctl restart g2agent.service
             echo " [✓] Monitors updated."
@@ -184,7 +183,7 @@ if [ -f "$AGENT_BIN" ] && [ -f "$CONFIG_FILE" ]; then
             ;;
         3)
             echo "------------------------------------------"
-            read -p "Are you sure you want to uninstall? (y/N): " confirm
+            read -p "Are you sure you want to uninstall? (y/N): " confirm </dev/tty
             if [[ "$confirm" =~ ^[Yy]$ ]]; then
                 do_uninstall
             else
@@ -201,18 +200,18 @@ fi
 
 # --- Initial Fresh Installation ---
 echo " Starting fresh installation..."
-read -p "Site name [BDXX00]: " input_site
+read -p "Site name [BDXX00]: " input_site </dev/tty
 SITE_NAME=${input_site:-BDXX00}
 
 TARGETS_BLOCK=""
 while true; do
     echo "------------------------------------------"
-    read -p "Monitor name [${SITE_NAME}-PING]: " input_monitor
+    read -p "Monitor name [${SITE_NAME}-PING]: " input_monitor </dev/tty
     MONITOR_NAME=${input_monitor:-${SITE_NAME}-PING}
 
-    read -p "Target (IP or URL): " input_target
+    read -p "Target (IP or URL): " input_target </dev/tty
     while [[ -z "$input_target" ]]; do
-        read -p " Target cannot be empty. Target: " input_target
+        read -p " Target cannot be empty. Target: " input_target </dev/tty
     done
     TARGET=$input_target
     
@@ -220,7 +219,7 @@ while true; do
     TARGETS_BLOCK+="    \"${MONITOR_NAME}|${TARGET}\"\n"
     
     echo ""
-    read -p "Add another target? (y/N): " add_more
+    read -p "Add another target? (y/N): " add_more </dev/tty
     if [[ ! "$add_more" =~ ^[Yy]$ ]]; then
         break
     fi
