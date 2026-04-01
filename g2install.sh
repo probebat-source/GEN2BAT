@@ -21,8 +21,9 @@ optimize_wifi() {
 }
 
 install_dependencies() {
-    echo "Installing required dependencies (jq, curl, awk)..."
-    sudo apt-get update -qq && sudo apt-get install -y jq curl awk > /dev/null
+    echo "Installing required dependencies (jq, curl)..."
+    # Removed awk from apt-get as it is natively built into the OS
+    sudo apt-get update -qq && sudo apt-get install -y jq curl > /dev/null
 }
 
 generate_agent() {
@@ -38,7 +39,6 @@ else
 fi
 
 N8N_WEBHOOK_URL="https://nscl.tailc52c94.ts.net/webhook/ps1"
-RESULTS_ARRAY="[]"
 
 for entry in "${TARGETS[@]}"; do
     MONITOR_NAME="${entry%%|*}"
@@ -50,6 +50,7 @@ for entry in "${TARGETS[@]}"; do
     HTTP_LATENCY=0
 
     if [[ "$TARGET" == http* ]]; then
+        # Native cURL HTTP Check
         HTTP_RESULT=$(curl -o /dev/null -s -w "%{http_code}|%{time_total}" --connect-timeout 2 -m 3 "$TARGET")
         HTTP_CODE="${HTTP_RESULT%|*}"
         HTTP_TIME_SEC="${HTTP_RESULT#*|}"
@@ -62,6 +63,7 @@ for entry in "${TARGETS[@]}"; do
             HTTP_STATUS="down"
         fi
     else
+        # Native ICMP Ping Check
         PING_RESULT=$(ping -c 1 -W 1 "$TARGET" 2>/dev/null)
         if [ $? -eq 0 ]; then
             PING_STATUS="up"
@@ -92,7 +94,10 @@ for entry in "${TARGETS[@]}"; do
         timestamp: $ts
       }')
 
+    # Send payload securely to n8n
     curl -X POST "$N8N_WEBHOOK_URL" -H "Content-Type: application/json" -d "$PAYLOAD" --connect-timeout 2 --max-time 3 --retry 0 -s -o /dev/null
+    
+    # 0.5s pause to prevent tailscale network buffer overflow
     sleep 0.5 
 done
 EOF
